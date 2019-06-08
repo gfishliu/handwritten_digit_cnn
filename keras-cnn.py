@@ -3,6 +3,11 @@ from keras.datasets import mnist
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Dense, Flatten
 from keras.models import Sequential
+import cv2
+import numpy as np
+import os
+
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 '''
 LeNet-5 
 2018/7/15
@@ -14,6 +19,7 @@ ThomasZou
 # 输入数据为 mnist 数据集
 x_train = x_train.reshape(x_train.shape[0], 28, 28, 1)
 x_test = x_test.reshape(x_test.shape[0], 28, 28, 1)
+
 
 x_train = x_train / 255
 x_test = x_test / 255
@@ -53,7 +59,44 @@ model.add(Dense(10, activation='softmax'))
 
 model.compile(loss=keras.metrics.categorical_crossentropy, optimizer=keras.optimizers.Adam(), metrics=['accuracy'])
 
-model.fit(x_train, y_train, batch_size=128, epochs=10, verbose=1, validation_data=(x_test, y_test))
+model.fit(x_train, y_train, batch_size=128, epochs=1, verbose=1, validation_data=(x_test, y_test))
 score = model.evaluate(x_test, y_test)
+pre = model.predict_classes(x_test).astype('int')
 print('Test Loss:', score[0])
 print('Test accuracy:', score[1])
+
+images = []
+img = []
+result=""
+real = ""
+y_test = np.argmax(y_test.astype('int'),axis=1)
+for index, im in enumerate(x_test):
+    result += str(pre[index])+" "
+    real += str(y_test[index])+" "
+    if(len(img) == 0):
+        img = im
+    else :
+        #横向组合
+        img = np.hstack((img, im))
+
+    #每行显示60个数字图片
+    if (img.shape[1] / 28 == 40):
+        result+="\n"
+        real+="\n"
+        if(len(images) == 0):
+            images = img.copy()
+            img = []
+        else:
+            #纵向组合
+            images = np.vstack((images, img))
+            img = []
+
+    if(index == 799):
+        break
+print("Predict Results:")
+print(result)
+print("Real Results:")
+print(real)
+cv2.imshow('Image Examples', images)
+cv2.waitKey()
+cv2.destroyAllWindows()
